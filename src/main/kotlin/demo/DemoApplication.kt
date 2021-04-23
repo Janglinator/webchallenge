@@ -1,6 +1,5 @@
 package demo
 
-import User
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Configuration
@@ -19,6 +18,7 @@ import java.lang.Math.ceil
 import java.lang.Math.min
 import java.net.URL
 import java.nio.charset.StandardCharsets
+import java.security.SecureRandom
 import java.util.*
 
 
@@ -35,6 +35,46 @@ class WebSecurityConfig : WebSecurityConfigurerAdapter() {
 	@Throws(Exception::class)
 	override fun configure(http: HttpSecurity) {
 		http.csrf().disable()
+	}
+}
+
+@RestController
+@RequestMapping("api/v1/user")
+class UserController(val userService: UserService) {
+	@PostMapping("/register")
+	fun registerUser(
+		@RequestBody registration: UserRegistration
+	) {
+		val existing = userService.findUser(registration.username)
+
+		if (existing != null) {
+			throw ResponseStatusException(
+				HttpStatus.CONFLICT, "User already exists", null
+			)
+		}
+
+		val user = User(null, registration.username, registration.password)
+		userService.post(user)
+	}
+
+	@PostMapping("/changePassword")
+	fun changePassword(
+		@RequestHeader("Authorization") authorization: String,
+		@RequestBody newPassword: String
+	) {
+		val user = userService.validateUser(authorization)
+		user.password = newPassword
+		userService.post(user)
+	}
+
+	@PostMapping("/changeUsername")
+	fun changeUsername(
+		@RequestHeader("Authorization") authorization: String,
+		@RequestBody newUsername: String
+	) {
+		val user = userService.validateUser(authorization)
+		user.username = newUsername
+		userService.post(user)
 	}
 }
 
@@ -59,25 +99,7 @@ class PokemonController(val userService: UserService, val pokemonService: Pokemo
 		@RequestHeader("Authorization") authorization: String,
 		showUncaptured: Boolean = false
 	): PokemonResponse {
-		var username: String? = null
-		var passwordHash: String? = null
-
-		if (authorization != null && authorization.toLowerCase().startsWith("basic")) {
-			val base64Credentials = authorization.substring("Basic".length).trim()
-			val credDecoded: ByteArray = Base64.getDecoder().decode(base64Credentials)
-			val credentials = String(credDecoded, StandardCharsets.UTF_8)
-			val values = credentials.split(":")
-			username = values[0]
-			passwordHash = BCryptPasswordEncoder().encode(values[1])
-		}
-
-		var user = userService.findUser(username ?: "")
-
-		if (user == null || user?.passwordHash != passwordHash) {
-			throw ResponseStatusException(
-				HttpStatus.UNAUTHORIZED, "User not found", null
-			)
-		}
+		userService.validateUser(authorization)
 
 		var pokemon = pokemonService.findPokemon()
 
@@ -139,8 +161,36 @@ interface UserRepository : CrudRepository<User, String> {
 
 @Service
 class UserService(val db: UserRepository) {
+	fun validateUser(authorization: String): User {
+		var username: String? = null
+		var password: String? = null
+
+		if (authorization != null && authorization.toLowerCase().startsWith("basic")) {
+			val base64Credentials = authorization.substring("Basic".length).trim()
+			val credDecoded: ByteArray = Base64.getDecoder().decode(base64Credentials)
+			val credentials = String(credDecoded, StandardCharsets.UTF_8)
+			val values = credentials.split(":")
+			username = values[0]
+			password = values[1]
+		}
+
+		var user = findUser(username ?: "")
+
+		if (user == null || user?.password != password) {
+			throw ResponseStatusException(
+				HttpStatus.UNAUTHORIZED, "User not found", null
+			)
+		}
+
+		return user!!
+	}
+
 	fun findUser(userName: String): User? {
 		return db.findUsers().firstOrNull { it.username == userName }
+	}
+
+	fun post(user: User) {
+		db.save(user)
 	}
 }
 
