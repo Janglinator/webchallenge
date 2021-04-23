@@ -28,8 +28,7 @@ class CSVLoader(
                 record.get("egg_groups"),
                 record.get("stats"),
                 record.get("genus"),
-                record.get("description"),
-                false
+                record.get("description")
             )
 
             service.post(pokemon)

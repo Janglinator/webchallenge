@@ -6,10 +6,6 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.data.jdbc.repository.query.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.http.HttpStatus
-import org.springframework.security.config.annotation.web.builders.HttpSecurity
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.stereotype.Repository
 import org.springframework.stereotype.Service
 import org.springframework.web.bind.annotation.*
@@ -27,15 +23,6 @@ class DemoApplication
 
 fun main(args: Array<String>) {
 	runApplication<DemoApplication>(*args)
-}
-
-@EnableWebSecurity
-@Configuration
-class WebSecurityConfig : WebSecurityConfigurerAdapter() {
-	@Throws(Exception::class)
-	override fun configure(http: HttpSecurity) {
-		http.csrf().disable()
-	}
 }
 
 @RestController
@@ -99,9 +86,8 @@ class PokemonController(val userService: UserService, val pokemonService: Pokemo
 		@RequestHeader("Authorization") authorization: String,
 		showUncaptured: Boolean = false
 	): PokemonResponse {
-		userService.validateUser(authorization)
-
-		var pokemon = pokemonService.findPokemon()
+		val user = userService.validateUser(authorization)
+		var pokemon = pokemonService.findPokemon(user)
 
 		if (!showUncaptured) {
 			pokemon = pokemon.filter { it.captured }
@@ -113,7 +99,7 @@ class PokemonController(val userService: UserService, val pokemonService: Pokemo
 			}
 		}
 
-		var paginatedPokemon = listOf<Pokemon>()
+		var paginatedPokemon = listOf<UserPokemon>()
 		val start = perPage * (page - 1)
 		val end = min(perPage * page, pokemon.count())
 		if (start <= pokemon.count() && start >= 0) {
@@ -132,21 +118,27 @@ class PokemonController(val userService: UserService, val pokemonService: Pokemo
 	}
 
 	@GetMapping(value = ["/{id}"])
-	fun getPokemon(@PathVariable id: Int): Pokemon? {
-		return pokemonService.findPokemon().firstOrNull {
-			it.pokemonId == id.toString()
-		}
+	fun getPokemon(
+		@PathVariable id: Int,
+		@RequestHeader("Authorization") authorization: String
+	): UserPokemon? {
+		val user = userService.validateUser(authorization)
+		return pokemonService.findPokemon(user, id.toString())
 	}
 
 	@PostMapping(value = ["capture/{id}"])
-	fun capturePokemon(@PathVariable id: Int): Pokemon? {
-		val pokemon = pokemonService.findPokemon().firstOrNull {
-			it.pokemonId == id.toString()
+	fun capturePokemon(
+		@PathVariable id: Int,
+		@RequestHeader("Authorization") authorization: String
+	): UserPokemon? {
+		val user = userService.validateUser(authorization)
+		val pokemon = pokemonService.findPokemon(user).firstOrNull {
+			it.pokedexId == id.toString()
 		}
 
 		pokemon?.captured = true
 		pokemon?.let {
-			pokemonService.post(it)
+			pokemonService.capture(user, it)
 		}
 
 		return pokemon
@@ -161,6 +153,7 @@ interface UserRepository : CrudRepository<User, String> {
 
 @Service
 class UserService(val db: UserRepository) {
+	// TODO: Use spring boot's security library.  It's too complex for a hack-n-slash demo like this.
 	fun validateUser(authorization: String): User {
 		var username: String? = null
 		var password: String? = null
@@ -200,11 +193,24 @@ interface PokemonRepository : CrudRepository<Pokemon, String> {
 	fun findPokemon(): List<Pokemon>
 }
 
+@Repository
+interface UserToPokemonRepository : CrudRepository<UserToPokemon, String> {
+	@Query("select * from user_to_pokemon")
+	fun findUserPokemon(): List<UserToPokemon>
+}
+
 @Service
-class PokemonService(val db: PokemonRepository) {
-	fun findPokemon(): List<Pokemon> {
+class PokemonService(val db: PokemonRepository, val userToPokemondb: UserToPokemonRepository) {
+	fun findPokemon(user: User, id: String): UserPokemon? {
+		return findPokemon(user).firstOrNull {
+			it.pokedexId == id
+		}
+	}
+
+	fun findPokemon(user: User): List<UserPokemon> {
 		var pokemon = db.findPokemon()
 
+		// TODO: preload on application launch
 		if (pokemon.count() == 0) {
 			val csvPath = "https://bitbucket.org/!api/2.0/snippets/myriadmobile/Rerr8E/96d04ea30f8e177149dd0c1c98271f1843b5f9b7/files/pokedex.csv"
 			URL(csvPath).openStream().use { input ->
@@ -213,10 +219,18 @@ class PokemonService(val db: PokemonRepository) {
 			}
 		}
 
-		return pokemon
+		val userToPokemon = userToPokemondb.findUserPokemon().filter { it.userId == user.id }
+		val userPokemon = pokemon.map { pokemon -> UserPokemon(userToPokemon.any { it.pokedexId == pokemon.pokedexId }, pokemon) }
+
+		return userPokemon
 	}
 
     fun post(pokemon: Pokemon) {
         db.save(pokemon)
+	}
+
+	fun capture(user: User, pokemon: UserPokemon) {
+		val entry = UserToPokemon(null, user.id, pokemon.pokedexId)
+		userToPokemondb.save(entry)
 	}
 }
