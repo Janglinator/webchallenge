@@ -1,11 +1,11 @@
-package demo
+package core.service
 
+import core.model.Pokemon
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import java.io.BufferedReader
 import java.io.InputStream
 import java.io.InputStreamReader
-import java.util.*
 
 class CSVLoader(
     private val service: PokemonService
