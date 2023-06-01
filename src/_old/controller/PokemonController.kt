@@ -1,11 +1,11 @@
-package core.controller
+package _old.controller
 
-import core.model.PokemonResponse
-import core.model.PokemonResponseMeta
-import core.model.UserPokemon
+import _old.model.PokemonResponse
+import _old.model.PokemonResponseMeta
+import _old.model.UserPokemon
 import org.springframework.web.bind.annotation.*
-import core.service.PokemonService
-import core.service.UserService
+import _old.service.PokemonService
+import _old.service.UserService
 
 @RestController
 @RequestMapping("/api/v1/pokemon")
@@ -29,7 +29,7 @@ class PokemonController(val userService: UserService, val pokemonService: Pokemo
 
         search?.let {
             pokemon = pokemon.filter {
-                it.name?.toLowerCase()?.contains(search?.toLowerCase() ?: "") ?: false
+                it.name?.toLowerCase()?.contains(search?.toLowerCase() ?: "") ?: falseD
             }
         }
 

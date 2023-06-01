@@ -1,9 +1,9 @@
-package core.service
+package _old.service
 
-import core.model.Pokemon
-import core.model.User
-import core.model.UserPokemon
-import core.model.UserToPokemon
+import _old.model.Pokemon
+import _old.model.User
+import _old.model.UserPokemon
+import _old.model.UserToPokemon
 import org.springframework.data.jdbc.repository.query.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 import java.net.URL
 
 @Repository
-interface PokemonRepository : CrudRepository<Pokemon, String> {
+interface PokemonRepository: CrudRepository<Pokemon, String> {
     @Query("select * from pokemon")
     fun findPokemon(): List<Pokemon>
 }

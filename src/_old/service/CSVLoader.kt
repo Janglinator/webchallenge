@@ -1,6 +1,6 @@
-package core.service
+package _old.service
 
-import core.model.Pokemon
+import _old.model.Pokemon
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import java.io.BufferedReader

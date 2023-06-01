@@ -1,11 +1,11 @@
-package core.controller
+package _old.controller
 
-import core.model.User
-import core.model.UserRegistration
+import _old.model.User
+import _old.model.UserRegistration
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.server.ResponseStatusException
-import core.service.UserService
+import _old.service.UserService
 
 @RestController
 @RequestMapping("api/v1/user")

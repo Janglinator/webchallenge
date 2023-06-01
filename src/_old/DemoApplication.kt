@@ -1,4 +1,4 @@
-package core
+package _old
 
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication

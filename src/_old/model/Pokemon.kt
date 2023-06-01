@@ -1,4 +1,4 @@
-package core.model
+package _old.model
 
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
@@ -29,11 +29,6 @@ open class BasePokemon(
     val stats: String?,
     val genus: String?,
     val description: String?,
-)
-
-data class PokemonResponse (
-    val data: List<UserPokemon>,
-    val meta: PokemonResponseMeta
 )
 
 data class PokemonResponseMeta (

@@ -1,6 +1,6 @@
-package core.service
+package _old.service
 
-import core.model.User
+import _old.model.User
 import org.springframework.data.jdbc.repository.query.Query
 import org.springframework.data.repository.CrudRepository
 import org.springframework.http.HttpStatus
