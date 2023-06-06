@@ -1,26 +1,21 @@
 package demo.adapter.out.dao
 
-import demo.adapter.out.entity.PokemonEntity
+import demo.adapter.out.repository.PokemonRepository
+import demo.adapter.out.entity.toEntity
 import demo.core.data.Pokemon
-import org.springframework.data.jdbc.repository.query.Query
-import org.springframework.data.jpa.repository.JpaRepository
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor
-import org.springframework.data.repository.NoRepositoryBean
+import demo.port.out.PokemonCRUDPort
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
-import java.util.*
 
-// (MongoDB (Document))      MariaDB -> Postgress
-// Keycloak
-// Microservice
-// Websockets
-// Quality of Life
-// Daba -> TablePlus
-// DSL
-// LiquidBase
-// JIB
-// Sonar scan task -> JCoco
-// Snyk (locally) & Sonar
+@Component
+class PokemonDao(
+    val pokemonRepository: PokemonRepository,
+): PokemonCRUDPort {
+    override fun createPokemon(pokemon: List<Pokemon>) {
+        pokemonRepository.saveAll(pokemon.map { it.toEntity() })
+    }
 
-// Entity Manager
-
-interface PokemonDao: JpaRepository<PokemonEntity, String>
+    override fun readPokemon(): List<Pokemon> {
+        return pokemonRepository.findAll().map { it.toDomainModel() }
+    }
+}

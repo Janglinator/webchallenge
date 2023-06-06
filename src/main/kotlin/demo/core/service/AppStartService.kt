@@ -12,11 +12,11 @@ class AppStartService(
     val pokemonCRUDPort: PokemonCRUDPort,
 ): ApplicationRunner {
     override fun run(args: ApplicationArguments?) {
-        val existing = pokemonCRUDPort.readPokemon();
-        if (existing.isNotEmpty()) return
         cSVDownloadPort.downloadPokemon { pokemon, error ->
             pokemon?.let {
-                pokemonCRUDPort.createPokemon(it)
+                val existing = pokemonCRUDPort.readPokemon();
+                val new = pokemon.filterNot { existing.any { existing -> existing.id == it.id  } }
+                pokemonCRUDPort.createPokemon(new)
             }
         }
     }

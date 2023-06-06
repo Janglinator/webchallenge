@@ -1,4 +1,4 @@
-package demo.adapter.out
+package demo.adapter.out.dao
 
 import demo.core.data.Pokemon
 import demo.port.out.CSVDownloadPort
@@ -13,7 +13,7 @@ import java.lang.Error
 import java.net.URL
 
 @Component
-class CSVDownloadAdapter: CSVDownloadPort {
+class CSVDownloadDao: CSVDownloadPort {
     override fun downloadPokemon(onComplete: (List<Pokemon>?, Error?) -> Unit) {
         val csvPath = "https://bitbucket.org/!api/2.0/snippets/myriadmobile/Rerr8E/96d04ea30f8e177149dd0c1c98271f1843b5f9b7/files/pokedex.csv"
         URL(csvPath).openStream().use { inputStream ->
