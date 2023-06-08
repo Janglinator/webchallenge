@@ -8,6 +8,8 @@ import demo.core.util.exception.UserAlreadyExistsException
 import demo.port.`in`.AuthUseCase
 import demo.port.out.AuthPort
 import demo.port.out.UserCRUDPort
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
+import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Component
 
 @Component
@@ -36,4 +38,3 @@ class AuthService(
         return authenticatedUser ?: throw UnauthorizedException("User is not authenticated")
     }
 }
-

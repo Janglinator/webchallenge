@@ -20,15 +20,9 @@ import java.util.*
 @Component
 class AuthDao(
     val userRepository: UserRepository,
-//    val authenticationManager: AuthenticationManager,
-//    val passwordEncoder: PasswordEncoder,
-): AuthPort, UserDetailsService {
-    // TODO: Split this out
-    override fun loadUserByUsername(username: String): User {
-        val entity = loadUserEntity(username) ?: throw UsernameNotFoundException("User not found: $username")
-        return User(entity.username, entity.passHash, emptyList())
-    }
-
+    val authenticationManager: AuthenticationManager,
+    val passwordEncoder: PasswordEncoder,
+): AuthPort {
     override fun loadUser(username: String): demo.core.data.User? {
         loadUserEntity(username)?.let {
             return demo.core.data.User(it.id, it.username)
@@ -42,25 +36,24 @@ class AuthDao(
     }
 
     override fun registerUser(request: AuthRequest) {
-//        val encodedPassword = passwordEncoder.encode(request.password)
-//        val user = UserEntity(UUID.randomUUID().toString(), request.username, encodedPassword)
-//        userRepository.save(user)
+        val encodedPassword = passwordEncoder.encode(request.password)
+        val user = UserEntity(UUID.randomUUID().toString(), request.username, encodedPassword)
+        userRepository.save(user)
     }
 
     override fun validateCredentials(request: AuthRequest) {
-//        val entity = loadUserEntity(request.username) ?: throw AuthenticationFailedException()
-//        val encodedPassword = passwordEncoder.encode(request.password)
-//        if (entity.passHash != encodedPassword) {
-//            throw AuthenticationFailedException()
-//        }
+        val entity = loadUserEntity(request.username) ?: throw AuthenticationFailedException()
+        val encodedPassword = passwordEncoder.encode(request.password)
+        if (entity.passHash != encodedPassword) {
+            throw AuthenticationFailedException()
+        }
     }
 
     override fun setAuthenticationContext(request: AuthRequest): String {
-//        val user = User(request.username, request.password, emptyList())
-//        val auth = UsernamePasswordAuthenticationToken(user, null, user.authorities)
-//        val token = authenticationManager.authenticate(auth)
-//        SecurityContextHolder.getContext().authentication = token
-//        return token.toString()
-        return ""
+        val user = User(request.username, request.password, emptyList())
+        val auth = UsernamePasswordAuthenticationToken(user, null, user.authorities)
+        val token = authenticationManager.authenticate(auth)
+        SecurityContextHolder.getContext().authentication = token
+        return token.toString()
     }
 }

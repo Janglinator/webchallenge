@@ -13,10 +13,13 @@ class AppStartService(
 ): ApplicationRunner {
     override fun run(args: ApplicationArguments?) {
         cSVDownloadPort.downloadPokemon { pokemon, error ->
+            error?.let {
+                println("ERROR: $it")
+                return@downloadPokemon
+            }
+
             pokemon?.let {
-                val existing = pokemonCRUDPort.readPokemon();
-                val new = pokemon.filterNot { existing.any { existing -> existing.id == it.id  } }
-                pokemonCRUDPort.createPokemon(new)
+                pokemonCRUDPort.createPokemon(it)
             }
         }
     }

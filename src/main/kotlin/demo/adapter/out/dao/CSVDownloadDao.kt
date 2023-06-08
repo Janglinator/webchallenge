@@ -34,7 +34,6 @@ class CSVDownloadDao: CSVDownloadPort {
         for (record in records) {
             pokemon.add(
                 Pokemon(
-                    null,
                     record.get("id"),
                     record.get("name"),
                     record.get("types"),
