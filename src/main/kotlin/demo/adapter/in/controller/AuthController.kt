@@ -16,21 +16,35 @@ class AuthController(
     val authUseCase: AuthUseCase,
 ) {
     @PostMapping("/register")
-    fun registerUser(@RequestBody request: AuthRequest): ResponseEntity<*> {
-        authUseCase.register(request)
-        return ResponseEntity.ok(null)
+    fun registerUser(@RequestBody request: AuthRequest): Any {
+        try {
+            authUseCase.register(request)
+            return ResponseEntity.ok(null)
+        } catch (ex: Exception) {
+            // TODO: Pass back exception
+            return ResponseEntity.badRequest()
+        }
     }
 
     @PostMapping("/login")
-    fun login(@RequestBody request: AuthRequest): ResponseEntity<*> {
-        val token = authUseCase.authenticate(request)
-        return ResponseEntity.ok(TokenResponse(token))
+    fun login(@RequestBody request: AuthRequest): Any {
+        try {
+            val token = authUseCase.authenticate(request)
+            return ResponseEntity.ok(TokenResponse(token))
+        } catch (ex: Exception) {
+            // TODO: Pass back exception
+            return ResponseEntity.badRequest()
+        }
     }
 
     @GetMapping("/user")
-    fun getCurrentUser(): String {
+    fun getCurrentUser(): Any {
         val authentication = SecurityContextHolder.getContext().authentication
-        return authentication.name
+        authentication?.let {
+            return ResponseEntity.ok(authentication.toString())
+        }
+        // TODO: Should be unauthorized
+        return ResponseEntity.badRequest()
     }
 }
 

@@ -12,11 +12,7 @@ class UserDetailsServiceImpl(
     val userRepository: UserRepository,
 ): UserDetailsService {
     override fun loadUserByUsername(username: String): User {
-        val entity = loadUserEntity(username) ?: throw UsernameNotFoundException("User not found: $username")
+        val entity = userRepository.findByUsername(username) ?: throw UsernameNotFoundException("User not found: $username")
         return User(entity.username, entity.passHash, emptyList())
-    }
-
-    fun loadUserEntity(username: String): UserEntity? {
-        return userRepository.findByUsername(username)
     }
 }

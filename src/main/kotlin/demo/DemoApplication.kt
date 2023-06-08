@@ -27,7 +27,7 @@ class DemoApplication(
 	override fun configure(http: HttpSecurity) {
 		http.csrf().disable()
 			.authorizeRequests()
-			.antMatchers("**/register", "**/login").permitAll()
+			.antMatchers("/**/register", "/**/login").permitAll()
 			.anyRequest().authenticated()
 			.and()
 			.addFilterBefore(
