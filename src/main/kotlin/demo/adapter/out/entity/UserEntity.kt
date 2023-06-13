@@ -2,6 +2,7 @@ package demo.adapter.out.entity
 
 import demo.core.data.User
 import lombok.NoArgsConstructor
+import org.springframework.security.core.GrantedAuthority
 import java.util.UUID
 import javax.persistence.Column
 import javax.persistence.Entity

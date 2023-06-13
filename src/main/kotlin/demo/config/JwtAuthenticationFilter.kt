@@ -1,12 +1,12 @@
 package demo.config
 
-import io.jsonwebtoken.Claims
-import io.jsonwebtoken.Jwts
-import io.jsonwebtoken.SignatureAlgorithm
+import com.fasterxml.jackson.databind.ObjectMapper
+import demo.adapter.out.dto.LoginDto
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.AuthenticationException
+import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.User
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import java.util.*
@@ -14,35 +14,30 @@ import javax.servlet.FilterChain
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-class JwtAuthenticationFilter(authenticationManager: AuthenticationManager) :
-    UsernamePasswordAuthenticationFilter(authenticationManager) {
+class JwtAuthenticationFilter(
+    private val jwtTokenUtil: JwtTokenUtil,
+    private val authenticationManager: AuthenticationManager
+) :
+    UsernamePasswordAuthenticationFilter() {
 
-    override fun attemptAuthentication(
-        request: HttpServletRequest,
-        response: HttpServletResponse
-    ): Authentication {
-        val username = request.getParameter("username")
-        val password = request.getParameter("password")
-        val authRequest = UsernamePasswordAuthenticationToken(username, password)
-        return authenticationManager.authenticate(authRequest)
+    override fun attemptAuthentication(req: HttpServletRequest, response: HttpServletResponse): Authentication {
+        val credentials = ObjectMapper().readValue(req.inputStream, LoginDto::class.java)
+        val auth = UsernamePasswordAuthenticationToken(
+            credentials.email,
+            credentials.password,
+            Collections.singleton(SimpleGrantedAuthority("user"))
+        )
+        return authenticationManager.authenticate(auth)
     }
 
     override fun successfulAuthentication(
-        request: HttpServletRequest,
-        response: HttpServletResponse,
-        chain: FilterChain?,
-        authResult: Authentication
+        req: HttpServletRequest?, res: HttpServletResponse, chain: FilterChain?,
+        auth: Authentication
     ) {
-        val userDetails = authResult.principal as User
-        val claims: Claims = Jwts.claims().setSubject(userDetails.username)
-
-        val token = Jwts.builder()
-            .setClaims(claims)
-            .setExpiration(Date(System.currentTimeMillis() + TOKEN_VALIDITY_MS))
-            .signWith(SignatureAlgorithm.HS512, SECRET_KEY)
-            .compact()
-
-        response.addHeader(AUTHORIZATION_HEADER, TOKEN_PREFIX + token)
+        val username = (auth.principal as UserSecurity).username
+        val token: String = jwtTokenUtil.generateToken(username)
+        res.addHeader("Authorization", token)
+        res.addHeader("Access-Control-Expose-Headers", "Authorization")
     }
 
     override fun unsuccessfulAuthentication(
@@ -50,13 +45,20 @@ class JwtAuthenticationFilter(authenticationManager: AuthenticationManager) :
         response: HttpServletResponse,
         failed: AuthenticationException
     ) {
-        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, failed.message)
+        val error = BadCredentialsError()
+        response.status = error.status
+        response.contentType = "application/json"
+        response.writer.append(error.toString())
     }
 
-    companion object {
-        const val TOKEN_VALIDITY_MS: Long = 3_600_000
-        const val SECRET_KEY = "urnevergonnaguessthis"
-        const val AUTHORIZATION_HEADER = "Authorization"
-        const val TOKEN_PREFIX = "Bearer "
+}
+
+private data class BadCredentialsError(
+    val timestamp: Long = Date().time,
+    val status: Int = 401,
+    val message: String = "Email or password incorrect",
+) {
+    override fun toString(): String {
+        return ObjectMapper().writeValueAsString(this)
     }
 }

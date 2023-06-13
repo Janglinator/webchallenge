@@ -21,7 +21,7 @@ import java.util.*
 @Component
 class AuthDao(
     val userRepository: UserRepository,
-    val authenticationManager: AuthenticationManager,
+//    val authenticationManager: AuthenticationManager,
     val passwordEncoder: PasswordEncoder,
 ): AuthPort {
     override fun loadUser(username: String): demo.core.data.User? {
@@ -50,10 +50,12 @@ class AuthDao(
     }
 
     override fun setAuthenticationContext(request: AuthRequest): String {
-        val user = User(request.username, request.password, emptyList())
-        val auth = UsernamePasswordAuthenticationToken(user, null, user.authorities)
-        val token = authenticationManager.authenticate(auth)
-        SecurityContextHolder.getContext().authentication = token
-        return token.toString()
+//        val user = User(request.username, request.password, emptyList())
+//        val auth = UsernamePasswordAuthenticationToken(user, null, user.authorities)
+//        val token = authenticationManager.authenticate(auth)
+//        SecurityContextHolder.getContext().authentication = token
+//        return token.toString()
+
+        return ""
     }
 }
