@@ -29,7 +29,7 @@ open class SecurityConfig(
     open fun filterChain(http: HttpSecurity): SecurityFilterChain {
         val authenticationManager = authManager(http)
         http.authorizeRequests()
-            .antMatchers("/**/register")
+            .antMatchers("/**/register", "/**/login")
             .permitAll().anyRequest().authenticated().and().csrf().disable()
 //            .userDetailsService(userDetailsService)
             .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
